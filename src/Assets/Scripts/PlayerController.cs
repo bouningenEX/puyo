@@ -5,6 +5,13 @@ using UnityEngine.UIElements;
 
 public class PlayerController : MonoBehaviour
 {
+    const float TRANS_TIME = 0.05f;
+    const float ROT_TIME = 0.05f;
+    AnimationController _animationController = new AnimationController();
+    Vector2Int _last_position;
+    RotState _last_rotate = RotState.Up;
+
+
     enum RotState
     {
         Up=0,
@@ -52,7 +59,16 @@ public class PlayerController : MonoBehaviour
 
         return true;
     }
+    void SetTransition(Vector2Int pos,RotState rot,float time)
+    {
+        _last_position = _position;
+        _last_rotate = _rotate;
 
+        _position = pos;
+        _rotate = rot;
+
+        _animationController.Set(time);
+    }
     private bool Translate(bool is_right)
     {
          Vector2Int pos = _position+(is_right ? Vector2Int.right : Vector2Int.left);
@@ -63,7 +79,7 @@ public class PlayerController : MonoBehaviour
         _puyoControllers[0].SetPos(new Vector3((float)_position.x, (float)_position.y, 0.0f));
         Vector2Int posChild= CalcChildPuyoPos(_position,_rotate);
         _puyoControllers[1].SetPos(new Vector3((float)posChild.x, (float)posChild.y , 0.0f));
-
+        SetTransition(pos,_rotate,TRANS_TIME);
         return true;
 }
     bool Rotate(bool is_right)
@@ -100,7 +116,7 @@ public class PlayerController : MonoBehaviour
         _puyoControllers[0].SetPos(new Vector3((float)_position.x, (float)_position.y, 0.0f));
         Vector2Int posChild = CalcChildPuyoPos(_position, _rotate);
         _puyoControllers[1].SetPos(new Vector3((float)posChild.x, (float)posChild.y, 0.0f));
-
+        SetTransition(pos, rot, ROT_TIME);
         return true;
     }
     void QuickDrop()
@@ -121,30 +137,42 @@ public class PlayerController : MonoBehaviour
 
         gameObject.SetActive(false);
     }
-    void Update()
+    void Control()
     {
-        if(Input.GetKeyDown(KeyCode.RightArrow))
+        if (Input.GetKeyDown(KeyCode.RightArrow))
         {
-            Translate(true);
+            Translate(true);return;
             //Debug.Log("MIGI");
         }
         if (Input.GetKeyDown(KeyCode.LeftArrow))
         {
-            Translate(false);
+            Translate(false);return;
             //Debug.Log("HIDARI");
         }
 
-        if(Input.GetKeyDown(KeyCode.X))
+        if (Input.GetKeyDown(KeyCode.X))
         {
-            Rotate(true);
+            Rotate(true);return;
         }
         if (Input.GetKeyDown(KeyCode.Z))
         {
-            Rotate(false);
+            Rotate(false);return;
         }
         if (Input.GetKeyDown(KeyCode.UpArrow))
         {
             QuickDrop();
         }
+    }
+    void Update()
+    {
+        if(!_animationController.Update(Time.deltaTime))
+        {
+            Control();
+        }
+        float anim_rate = _animationController.GetNormalized();
+        -puyoControllers[0].SetPos(Interpolate(_position, RotState.Invalid, _last_position, RotState.Invalid, anim_rate));
+        -puyoControllers[1].SetPos(Interpolate(_position,_rotate, _last_position, _last_rotate, anim_rate));
+
+
     }
 }
