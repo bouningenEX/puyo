@@ -35,8 +35,8 @@ public class BoardController : MonoBehaviour
     // Update is called once per frame
     public static bool IsValidated(Vector2Int pos)
     {
-        return 0<=pos.x && pos.x <= BOARD_WIDTH
-            && 0<=pos.y && pos.y <= BOARD_HEIGHT;
+        return 0<=pos.x && pos.x < BOARD_WIDTH
+            && 0<=pos.y && pos.y < BOARD_HEIGHT;
         
     }
     public bool CanSettle(Vector2Int pos)

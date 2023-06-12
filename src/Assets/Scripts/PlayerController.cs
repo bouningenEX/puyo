@@ -6,12 +6,35 @@ using UnityEngine.UIElements;
 
 public class PlayerController : MonoBehaviour
 {
-    const float TRANS_TIME = 0.05f;
-    const float ROT_TIME = 0.05f;
+    const int TRANS_TIME = 3;
+    const int ROT_TIME = 3;
     AnimationController _animationController = new AnimationController();
     Vector2Int _last_position;
     RotState _last_rotate = RotState.Up;
+    LogicalInput logicalInput = new();
 
+    static readonly KeyCode[] key_code_tbl = new KeyCode[(int)LogicalInput.Key.MAX]
+    {
+        KeyCode.RightArrow,
+        KeyCode.LeftArrow,
+        KeyCode.X,
+        KeyCode.Z,
+        KeyCode.UpArrow,
+        KeyCode.DownArrow,
+    };
+
+    void UpdateInput()
+    {
+        LogicalInput.Key inputDev = 0;
+        for(int i=0; i <(int)LogicalInput.Key.MAX;i++)
+        {
+            if(Input.GetKey(key_code_tbl[i]))
+            {
+                inputDev |= (LogicalInput.Key)(1 << i);
+            }
+        }
+        logicalInput.Update(inputDev);
+    }
 
     enum RotState
     {
@@ -60,7 +83,7 @@ public class PlayerController : MonoBehaviour
 
         return true;
     }
-    void SetTransition(Vector2Int pos, RotState rot, float time)
+    void SetTransition(Vector2Int pos, RotState rot, int time)
     {
         _last_position = _position;
         _last_rotate = _rotate;
@@ -140,34 +163,36 @@ public class PlayerController : MonoBehaviour
     }
     void Control()
     {
-        if (Input.GetKeyDown(KeyCode.RightArrow))
+        if (logicalInput.IsRepeat(LogicalInput.Key.Right))
         {
-            Translate(true); return;
-            //Debug.Log("MIGI");
+            if(Translate(true)) return;
+            Debug.Log("MIGI");
         }
-        if (Input.GetKeyDown(KeyCode.LeftArrow))
+        if (logicalInput.IsRepeat(LogicalInput.Key.Left))
         {
-            Translate(false); return;
-            //Debug.Log("HIDARI");
+            if (Translate(false)) return;
+            Debug.Log("HIDARI");
         }
 
-        if (Input.GetKeyDown(KeyCode.X))
+        if (logicalInput.IsTrigger(LogicalInput.Key.RotR))
         {
-            Rotate(true); return;
+            if (Rotate(true)) return;
         }
-        if (Input.GetKeyDown(KeyCode.Z))
+        if (logicalInput.IsTrigger(LogicalInput.Key.RotL))
         {
-            Rotate(false); return;
+            if (Rotate(false)) return;
         }
-        if (Input.GetKeyDown(KeyCode.UpArrow))
+        if (logicalInput.IsRelease(LogicalInput.Key.QuickDrop))
         {
             QuickDrop();
         }
     }
-    void Update()
-    {
-        if (!_animationController.Update(Time.deltaTime))
-        {
+    void FixedUpdate()
+{
+
+        UpdateInput();
+        if(!_animationController.Update())
+        { 
             Control();
         }
         float anim_rate = _animationController.GetNormalized();
@@ -194,5 +219,6 @@ public class PlayerController : MonoBehaviour
 
 
     }
+    
 }
    
