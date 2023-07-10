@@ -11,26 +11,31 @@ public class PlayDirector : MonoBehaviour
         {
             Control = 0,
             GameOver = 1,
+            Falling = 2,
 
             MAX,
 
             Unchanged,
         }
 
-        E_State Initialalize(PlayDirector parent);
+        E_State Initialize(PlayDirector parent);
         E_State Update(PlayDirector parent);
         
     }
-    IState.E_State _current_state = IState.E_State.Control;
+
+   
+    IState.E_State _current_state = IState.E_State.Falling;
     static readonly IState[] states = new IState[(int)IState.E_State.MAX]
     {
         new ControlState(),
         new GameOverState(),
+        new FallingState(),
     };
 
-[SerializeField] GameObject player = default!;
     PlayerController _playerController = null;
+[SerializeField] GameObject player = default!;
     LogicalInput _logicalInput = new();
+    BoardController _boardController = default!;
 
     NextQueue _nextQueue = new();
     [SerializeField] PuyoPair[] nextPuyoPairs = {default!,default!};
@@ -48,6 +53,7 @@ public class PlayDirector : MonoBehaviour
     {
         _playerController = player.GetComponent<PlayerController>();
         _logicalInput.Clear();
+        _playerController.SetLogicalInput(_logicalInput);
         _playerController.SetLogicalInput(_logicalInput);
 
         _nextQueue.Initialize();
@@ -84,7 +90,7 @@ void UpdateInput()
 
     class ControlState : IState
     {
-        IState.E_State IState.Initialalize(PlayDirector parent)
+       public IState.E_State Initialize(PlayDirector parent)
         {
             if (!parent.Spawn(parent._nextQueue.Update()))
             {
@@ -94,26 +100,37 @@ void UpdateInput()
             return IState.E_State.Unchanged;
         }
 
-        IState.E_State IState.Update(PlayDirector parent)
+        public IState.E_State Update(PlayDirector parent)
         {
-            return parent.player.activeSelf ? IState.E_State.Unchanged : IState.E_State.Control;
+            return parent.player.activeSelf ? IState.E_State.Unchanged : IState.E_State.Falling;
         }
     }
     class GameOverState :IState
     {
-        IState.E_State IState.Initialalize(PlayDirector parent)
+        IState.E_State IState.Initialize(PlayDirector parent)
         {
             SceneManager.LoadScene(0);
             return IState.E_State.GameOver;
         }
         IState.E_State IState.Update(PlayDirector parent) { return IState.E_State.Unchanged; }
     }
+    class FallingState : IState
+    {
+        public IState.E_State Initialize(PlayDirector parent)
+        {
+            return parent._boardController.CheckFall() ? IState.E_State.Unchanged : IState.E_State.Control;
+        }
+        public IState.E_State Update(PlayDirector parent)
+        {
+            return parent._boardController.Fall() ? IState.E_State.Unchanged : IState.E_State.Control;
+        }
 
+    }
     void InitializeState()
     {
         Debug.Assert(condition: _current_state is >= 0 and < IState.E_State.MAX);
 
-        var next_state = states[(int)_current_state].Initialalize(this);
+        var next_state = states[(int)_current_state].Initialize(this);
 
         if(next_state !=IState.E_State.Unchanged)
         {
