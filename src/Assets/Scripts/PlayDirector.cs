@@ -12,6 +12,7 @@ public class PlayDirector : MonoBehaviour
             Control = 0,
             GameOver = 1,
             Falling = 2,
+            Erasing = 3,
 
             MAX,
 
@@ -30,12 +31,13 @@ public class PlayDirector : MonoBehaviour
         new ControlState(),
         new GameOverState(),
         new FallingState(),
+        new ErasingState(),
     };
 
     PlayerController _playerController = null;
 [SerializeField] GameObject player = default!;
     LogicalInput _logicalInput = new();
-    BoardController _boardController = default!;
+    [SerializeField] BoardController _boardController = default!;
 
     NextQueue _nextQueue = new();
     [SerializeField] PuyoPair[] nextPuyoPairs = {default!,default!};
@@ -118,11 +120,23 @@ void UpdateInput()
     {
         public IState.E_State Initialize(PlayDirector parent)
         {
-            return parent._boardController.CheckFall() ? IState.E_State.Unchanged : IState.E_State.Control;
+            return parent._boardController.CheckFall() ? IState.E_State.Unchanged : IState.E_State.Erasing;
         }
         public IState.E_State Update(PlayDirector parent)
         {
-            return parent._boardController.Fall() ? IState.E_State.Unchanged : IState.E_State.Control;
+            return parent._boardController.Fall() ? IState.E_State.Unchanged : IState.E_State.Erasing;
+        }
+
+    }
+    class ErasingState : IState
+    {
+        public IState.E_State Initialize(PlayDirector parent)
+        {
+            return parent._boardController.CheckErase() ? IState.E_State.Unchanged : IState.E_State.Control;
+         }
+        public IState.E_State Update(PlayDirector parent)
+        {
+            return parent._boardController.Erase() ? IState.E_State.Unchanged : IState.E_State.Falling;
         }
 
     }
