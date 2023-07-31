@@ -1,10 +1,26 @@
 using System.Collections;
 using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+[RequireComponent(typeof(BoardController))]
+
 
 public class PlayDirector : MonoBehaviour
 {
+    [SerializeField] TextMeshProUGUI textScore = default!;
+    uint _score = 0;
+    int _chainCount = -1;
+
+    void SetScore(uint score)
+    {
+        _score = score;
+        textScore.text = score.ToString();
+    }
+    void AddScore(uint score)
+    {
+        if(0<score)SetScore(_score+score);
+    }
     interface IState
     {
         public enum E_State
@@ -23,7 +39,7 @@ public class PlayDirector : MonoBehaviour
         E_State Update(PlayDirector parent);
         
     }
-
+    
    
     IState.E_State _current_state = IState.E_State.Falling;
     static readonly IState[] states = new IState[(int)IState.E_State.MAX]
@@ -35,7 +51,7 @@ public class PlayDirector : MonoBehaviour
     };
 
     PlayerController _playerController = null;
-[SerializeField] GameObject player = default!;
+    [SerializeField] GameObject player = default!;
     LogicalInput _logicalInput = new();
     [SerializeField] BoardController _boardController = default!;
 
@@ -84,6 +100,9 @@ void UpdateInput()
         UpdateInput();
 
         UpdateState();
+
+        AddScore(_playerController.popScore());
+        AddScore(_boardController.popScore());
     }
     
 
@@ -164,4 +183,5 @@ void UpdateInput()
             InitializeState();
         }
     }
+    
 }

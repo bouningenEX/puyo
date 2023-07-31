@@ -20,6 +20,8 @@ public class PlayerController : MonoBehaviour
     
     int _fallCount = 0;
     int _groundFrame = GROUND_FRAMES;
+
+    uint _additiveScore = 0;
     public void SetLogicalInput(LogicalInput reference)
     {
         _logicalInput = reference;
@@ -54,7 +56,7 @@ public class PlayerController : MonoBehaviour
         Vector2Int position = new(2, 12);
         RotState rotate = RotState.Up;
         if (!CanMove(position, rotate)) return false;
-
+       // Debug.Log("konnitiha");
         _position = _last_position = position;
         _rotate = _last_rotate = rotate;
         _animationController.Set(1);
@@ -189,6 +191,8 @@ public class PlayerController : MonoBehaviour
             _last_position += Vector2Int.down;
             _fallCount += FALL_COUNT_UNIT;
         }
+
+        if (is_fast) _additiveScore++;
         return true;
     }
     void Control()
@@ -252,6 +256,13 @@ public class PlayerController : MonoBehaviour
         }
 
 
+    }
+    public uint popScore()
+    {
+        uint score =_additiveScore;
+        _additiveScore = 0;
+
+        return score;
     }
     
 }
